@@ -18,7 +18,7 @@ key_maps = {
     pygame.K_d: RIGHT
 }
 
-move_speed = 64
+move_speed = 256
 
 win_x = 1920
 win_y = 1080
@@ -71,13 +71,13 @@ class Snake:
     def changedir(self, new_dir):
         self.dir = self.dir if self.dir + new_dir == 0 else new_dir
         if self.dir == UP:
-            self.head.y -= self.size/4
+            self.head.y -= self.size/16
         if self.dir == DOWN:
-            self.head.y += self.size/4
+            self.head.y += self.size/16
         if self.dir == LEFT:
-            self.head.x -= self.size/4
+            self.head.x -= self.size/16
         if self.dir == RIGHT:
-            self.head.x += self.size/4
+            self.head.x += self.size/16
 
 class Food:
     def __init__(self, size):
@@ -119,7 +119,7 @@ if __name__ == '__main__':
             move_speed += 4
             food.is_spawned = False
             frame_ctr = 0
-        elif frame_ctr > 4: 
+        elif frame_ctr > 16: 
             snake.body.pop()
 
         if not food.is_spawned:
