@@ -18,7 +18,7 @@ key_maps = {
     pygame.K_d: RIGHT
 }
 
-move_speed = 60
+move_speed = 64
 
 win_x = 1920
 win_y = 1080
@@ -90,25 +90,36 @@ class Food:
     def spawnfood(self):
         self.__init__(self.size)
 
+def is_collision(pos0, pos1, size0, size1):
+    left0 = pos0.x
+    right0 = pos0.x + size0
+    top0 = pos0.y
+    bottom0 = pos0.y + size0
+    left1 = pos1.x
+    right1 = pos1.x + size1
+    top1 = pos1.y
+    bottom1 = pos1.y + size1
+    return left0 < right1 and right0 > left1 and top0 < bottom1 and bottom0 > top1
+
 if __name__ == '__main__':
     size = 16
-    snake = Snake(x=size*4, y=size*2, size=size, length=2, dir=RIGHT)
+    snake = Snake(x=size*4, y=size*2, size=size, length=0, dir=RIGHT)
     food = Food(size=size)
     new_dir = snake.dir
     frame_ctr = 0
     while True:
-        if frame_ctr % 4 == 0:
-            for e in pygame.event.get():
-                if e.type == pygame.KEYDOWN and e.key in key_maps:
-                    new_dir = key_maps[e.key]
+        for e in pygame.event.get():
+            if e.type == pygame.KEYDOWN and e.key in key_maps:
+                new_dir = key_maps[e.key]
         snake.changedir(new_dir)
 
         snake.body.insert(0, Position(snake.head.x, snake.head.y))
-        if snake.head.x == food.pos.x and snake.head.y == food.pos.y:
+        if is_collision(snake.head, food.pos, snake.size, food.size):
             score += 10
-            move_speed += 2
+            move_speed += 4
             food.is_spawned = False
-        else:
+            frame_ctr = 0
+        elif frame_ctr > 4: 
             snake.body.pop()
 
         if not food.is_spawned:
