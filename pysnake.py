@@ -18,10 +18,10 @@ key_maps = {
     pygame.K_d: RIGHT
 }
 
-move_speed = 10
+move_speed = 60
 
-win_x = 1280
-win_y = 720
+win_x = 1920
+win_y = 1080
 
 black = pygame.Color(0, 0, 0)
 white = pygame.Color(255, 255, 255)
@@ -38,67 +38,73 @@ fps = pygame.time.Clock()
 
 score = 0
 
-def display_score(choice, color, font, size):
-    score_font = pygame.font.SysFont(font, size)
-    score_surface = score_font.render(f'SCORE {score}', True, color)
-    score_rect = score_surface.get_rect()
-    game_window.blit(score_surface, score_rect)
+def display_score():
+    font = pygame.font.SysFont('JetBrainsMono Nerd Font', 30)
+    surface = font.render(f'SCORE {score}', True, white)
+    rect = surface.get_rect()
+    game_window.blit(surface, rect)
 
 def game_over():
     font = pygame.font.SysFont('JetBrainsMono Nerd Font', 50)
-    game_over_surface = font.render(f'GAME OVER | SCORE {score}', True, red)
-    game_over_rect = game_over_surface.get_rect()
-    game_over_rect.midtop = (win_x/2, win_y/2)
-    game_window.blit(game_over_surface, game_over_rect)
+    surface = font.render(f'GAME OVER | SCORE {score}', True, red)
+    rect = surface.get_rect()
+    rect.midtop = (win_x/2, win_y/2)
+    game_window.blit(surface, rect)
     pygame.display.flip()
     time.sleep(5)
     pygame.quit()
     quit()
 
-class Snake:
-    def __init__(self, x, y, size, length, dir):
+class Position:
+    def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.size = size
-        self.body = [[x, y]]
-        for i in range(length-1):
-            self.body.append([x - (i * size), y])
-        self.dir = dir
 
+class Snake:
+    def __init__(self, x, y, size, length, dir):
+        self.head = Position(x, y)
+        self.size = size
+        self.body = []
+        for i in range(length):
+            self.body.append(Position(x - (i * size), y))
+        self.dir = dir
     def changedir(self, new_dir):
         self.dir = self.dir if self.dir + new_dir == 0 else new_dir
         if self.dir == UP:
-            self.y -= self.size
+            self.head.y -= self.size/4
         if self.dir == DOWN:
-            self.y += self.size
+            self.head.y += self.size/4
         if self.dir == LEFT:
-            self.x -= self.size
+            self.head.x -= self.size/4
         if self.dir == RIGHT:
-            self.x += self.size
+            self.head.x += self.size/4
 
 class Food:
     def __init__(self, size):
         self.is_spawned = True
         self.size = size
-        self.x = random.randrange(1, (win_x//self.size)) * self.size
-        self.y = random.randrange(1, (win_y//self.size)) * self.size 
-
+        self.pos = Position(
+            random.randrange(1, (win_x//self.size)) * self.size,
+            random.randrange(1, (win_y//self.size)) * self.size
+        )
     def spawnfood(self):
         self.__init__(self.size)
 
 if __name__ == '__main__':
-    snake = Snake(x=100, y=40, size=20, length=1, dir=RIGHT)
+    size = 16
+    snake = Snake(x=size*4, y=size*2, size=size, length=2, dir=RIGHT)
+    food = Food(size=size)
     new_dir = snake.dir
-    food = Food(size=20)
+    frame_ctr = 0
     while True:
-        for e in pygame.event.get():
-            if e.type == pygame.KEYDOWN and e.key in key_maps:
-                new_dir = key_maps[e.key]
-
+        if frame_ctr % 4 == 0:
+            for e in pygame.event.get():
+                if e.type == pygame.KEYDOWN and e.key in key_maps:
+                    new_dir = key_maps[e.key]
         snake.changedir(new_dir)
 
-        snake.body.insert(0, [snake.x, snake.y])
-        if snake.x == food.x and snake.y == food.y:
+        snake.body.insert(0, Position(snake.head.x, snake.head.y))
+        if snake.head.x == food.pos.x and snake.head.y == food.pos.y:
             score += 10
             move_speed += 2
             food.is_spawned = False
@@ -111,21 +117,20 @@ if __name__ == '__main__':
         game_window.fill(black)
 
         for pos in snake.body:
-            pygame.draw.rect(game_window, green, pygame.Rect(pos[0], pos[1], snake.size, snake.size))
+            pygame.draw.rect(game_window, green, pygame.Rect(pos.x, pos.y, snake.size, snake.size))
+        pygame.draw.rect(game_window, red, pygame.Rect(food.pos.x, food.pos.y, food.size, food.size))
 
-        pygame.draw.rect(game_window, red, pygame.Rect(food.x, food.y, food.size, food.size))
-
-        if snake.x < 0 or snake.x > win_x-snake.size:
+        if snake.head.x < 0 or snake.head.x > (win_x - snake.size):
             game_over()
-        if snake.y < 0 or snake.y > win_y-snake.size:
+        if snake.head.y < 0 or snake.head.y > (win_y - snake.size):
             game_over()
-
         for block in snake.body[1:]:
-            if snake.x == block[0] and snake.y == block[1]:
+            if snake.head.x == block.x and snake.head.y == block.y:
                 game_over()
 
-        display_score(1, white, 'JetBrainsMono Nerd Font', 40)
+        display_score()
 
         pygame.display.update()
         fps.tick(move_speed)
+        frame_ctr += 1
 
